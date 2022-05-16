@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -20,6 +21,18 @@ const (
 	urlTemplate = "https://www.zeit.de/serie/die-kaenguru-comics?p="
 	startUrl    = urlTemplate + "1"
 )
+
+type HttpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+var (
+	httpClient HttpClient
+)
+
+func init() {
+	httpClient = &http.Client{}
+}
 
 type Comic struct {
 	Id     int    `json:"id"`
@@ -41,17 +54,20 @@ func configureLogger(path string) {
 }
 
 func fetchPageBody(url string) (string, error) {
-	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 
 	// Zeit.de only allows direct access for certain user agents.
 	// Set the user agent manually to avoid running into a ads/permission wall.
 	req.Header.Set("User-Agent", "curl/7.82.0")
 
-	res, err := client.Do(req)
+	res, err := httpClient.Do(req)
 	if err != nil {
 		log.Printf("Error when fetching URL: %s", url)
 		return "", err
+	}
+
+	if res.StatusCode >= 400 {
+		return "", errors.New(fmt.Sprintf("Issue while fetching the page. Status code: %v", res.StatusCode))
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
