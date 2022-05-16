@@ -120,21 +120,10 @@ func fetchAndExtract(url string) ([]Comic, int) {
 	return comics, lastPageIndex
 }
 
-func fmtAsJson(comics []Comic) (string, error) {
-	jsonBytes, err := json.Marshal(comics)
-	if err != nil {
-		return "", err
-	}
-	return string(jsonBytes), nil
-}
-
-func main() {
-	timeout := flag.Int("timeout", 10, "seconds until http requests time out")
-	logfile := flag.String("logfile", "", "defines the path to the logfile")
-	flag.Parse()
-
-	configureLogger(*logfile)
-
+// fetchAll fetches the initial page and all found subpages to create a slice of
+// all published comics. Comics are fetched from all subpages in parallel and
+// are sorted after their ID before returned.
+func fetchAll(timeout int) []Comic {
 	comics, maxPageIndex := fetchAndExtract(startUrl)
 
 	ch := make(chan []Comic)
@@ -153,13 +142,33 @@ func main() {
 		select {
 		case next := <-ch:
 			comics = append(comics, next[:]...)
-		case <-time.After(time.Second * time.Duration(*timeout)):
+		case <-time.After(time.Second * time.Duration(timeout)):
 			break
 		}
 	}
 
 	// Comics have been received async and are out of order. Sort them now.
 	sort.Slice(comics, func(a, b int) bool { return comics[a].Id < comics[b].Id })
+
+	return comics
+}
+
+func fmtAsJson(comics []Comic) (string, error) {
+	jsonBytes, err := json.Marshal(comics)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonBytes), nil
+}
+
+func main() {
+	timeout := flag.Int("timeout", 10, "seconds until http requests time out")
+	logfile := flag.String("logfile", "", "defines the path to the logfile")
+	flag.Parse()
+
+	configureLogger(*logfile)
+
+	comics := fetchAll(*timeout)
 
 	res, err := fmtAsJson(comics)
 	if err != nil {
