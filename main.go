@@ -103,23 +103,19 @@ func parsePage(body string) ([]Comic, int) {
 	return comics, pageIndices[len(pageIndices)-1]
 }
 
-// fetchAndExtract fetches a URL, extracts all comics from the body and writes
-// the slice in a channel if given.
+// fetchAndExtract fetches a URL and extracts all comics from the body.
 // It returns a slice of comics and the maximum page value that has been read
 // from the paginator.
 //
 // The function can be used either by providing a channel and later reading from
 // it, or by evaluating the returned values.
-func fetchAndExtract(url string, ch chan []Comic) ([]Comic, int) {
+func fetchAndExtract(url string) ([]Comic, int) {
 	html, err := fetchPageBody(url)
 	if err != nil {
 		log.Fatalf("Error when fetching URL: %s", url)
 		panic(err)
 	}
 	comics, lastPageIndex := parsePage(html)
-	if ch != nil {
-		ch <- comics
-	}
 	log.Printf("Fetched %s\n", url)
 	return comics, lastPageIndex
 }
@@ -139,14 +135,17 @@ func main() {
 
 	configureLogger(*logfile)
 
-	comics, maxPageIndex := fetchAndExtract(startUrl, nil)
+	comics, maxPageIndex := fetchAndExtract(startUrl)
 
 	ch := make(chan []Comic)
 
 	// looping from i=2 because we have already indexed the first page
 	for i := 2; i <= maxPageIndex; i++ {
 		url := urlTemplate + fmt.Sprintf("%v", i)
-		go fetchAndExtract(url, ch)
+		go func() {
+			cs, _ := fetchAndExtract(url)
+			ch <- cs
+		}()
 	}
 
 	// looping from i=2 because we have already indexed the first page
