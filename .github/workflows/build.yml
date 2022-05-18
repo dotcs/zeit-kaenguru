@@ -1,0 +1,19 @@
+name: "Build zeit-kaenguru"
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '^1.18.0'
+    - run: go version
+    - run: go test ./...
+
+    - run: go build ./cmd/crawler
+    - run: go build ./cmd/update_gist

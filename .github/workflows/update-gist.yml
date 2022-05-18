@@ -1,0 +1,26 @@
+name: "Update Gist"
+
+on:
+  # schedule:
+  # - cron: "0 6,18 * * *"
+  push:
+    branches: [ main ]
+
+jobs:
+  update_gist:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+      with:
+        go-version: '^1.18.0'
+    - run: go version
+    - run: go test ./...
+
+    - run: go build ./cmd/crawler
+    - run: go build ./cmd/update_gist
+
+    - run: ./crawler --output-file comics.json
+    - run: ./update_gist --gist-id fd3d8440ca4e338cd0185caadcd1a009 --file comics.json
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_GIST_TOKEN }}
