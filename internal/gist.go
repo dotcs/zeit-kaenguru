@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -41,7 +42,7 @@ func UpdateGist(gistId string, ghToken string, data Gist) error {
 		return err
 	}
 
-	println(fmt.Sprintf("%v", res.StatusCode))
+	log.Printf("Gist PATCH status code: %v", res.StatusCode)
 	_, err = ioutil.ReadAll(res.Body)
 	if err != nil {
 		return err
