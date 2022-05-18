@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 )
 
 func ConfigureLogger(path string) {
 	if path == "" {
-		dir := os.TempDir()
-		path = filepath.Join(dir, "log.log")
+		log.SetOutput(os.Stdout)
+		return
 	}
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
