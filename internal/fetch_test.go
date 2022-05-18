@@ -52,7 +52,7 @@ func TestFetchPageBody(t *testing.T) {
 		httpClient = mc
 		_, err := fetchPageBody("https://example.com")
 		if assert.Error(t, err) {
-			assert.ErrorContains(t, err, "Status code: 500")
+			assert.ErrorContains(t, err, "status code: 500")
 		}
 	})
 }
