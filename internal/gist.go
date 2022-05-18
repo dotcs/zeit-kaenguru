@@ -30,7 +30,7 @@ func UpdateGist(gistId string, ghToken string, data Gist) error {
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", ghToken))
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
-	body, err := FmtGistAsJson(data)
+	body, err := FmtAsJson(data)
 	if err != nil {
 		return err
 	}
@@ -43,6 +43,9 @@ func UpdateGist(gistId string, ghToken string, data Gist) error {
 
 	println(fmt.Sprintf("%v", res.StatusCode))
 	_, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
 	res.Body.Close()
 
 	return nil

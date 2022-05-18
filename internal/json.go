@@ -2,16 +2,8 @@ package internal
 
 import "encoding/json"
 
-func FmtAsJson(comics []Comic) (string, error) {
-	jsonBytes, err := json.Marshal(comics)
-	if err != nil {
-		return "", err
-	}
-	return string(jsonBytes), nil
-}
-
-func FmtGistAsJson(gist Gist) (string, error) {
-	jsonBytes, err := json.Marshal(gist)
+func FmtAsJson[K any](obj K) (string, error) {
+	jsonBytes, err := json.Marshal(obj)
 	if err != nil {
 		return "", err
 	}

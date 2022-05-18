@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -29,6 +28,10 @@ func init() {
 
 func fetchPageBody(url string) (string, error) {
 	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Printf("Error when creating request with URL: %s", url)
+		return "", err
+	}
 
 	// Zeit.de only allows direct access for certain user agents.
 	// Set the user agent manually to avoid running into a ads/permission wall.
@@ -41,13 +44,18 @@ func fetchPageBody(url string) (string, error) {
 	}
 
 	if res.StatusCode >= 400 {
-		return "", errors.New(fmt.Sprintf("Issue while fetching the page. Status code: %v", res.StatusCode))
+		return "", fmt.Errorf("issue while fetching the page, status code: %v", res.StatusCode)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Printf("Error when reading server response")
+		return "", err
+
+	}
 	res.Body.Close()
 
-	return fmt.Sprintf("%s", body), nil
+	return string(body), nil
 }
 
 // fetchAndExtract fetches a URL and extracts all comics from the body.
@@ -90,7 +98,7 @@ func FetchAll(timeout int) []Comic {
 		case next := <-ch:
 			comics = append(comics, next[:]...)
 		case <-time.After(time.Second * time.Duration(timeout)):
-			break
+			continue
 		}
 	}
 
