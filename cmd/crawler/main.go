@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/dotcs/zeit-kaenguru/internal"
 )
@@ -10,6 +12,7 @@ import (
 func main() {
 	timeout := flag.Int("timeout", 10, "seconds until http requests time out")
 	logfile := flag.String("logfile", "", "defines the path to the logfile")
+	outputFile := flag.String("output-file", "", "defines where the result should be written to")
 	flag.Parse()
 
 	internal.ConfigureLogger(*logfile)
@@ -20,5 +23,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(res)
+	if *outputFile != "" {
+		err = os.WriteFile(*outputFile, []byte(res), 0644)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		fmt.Println(res)
+	}
+	log.Println("👍 Success. Data fetched from server.")
 }
