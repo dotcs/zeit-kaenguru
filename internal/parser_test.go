@@ -1,8 +1,6 @@
-package main
+package internal
 
 import (
-	"bytes"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
@@ -21,7 +19,7 @@ func (m MockClient) Do(req *http.Request) (*http.Response, error) {
 func TestParsePage(t *testing.T) {
 	t.Parallel()
 
-	content, err := os.ReadFile("tests/assets/page.html")
+	content, err := os.ReadFile("../tests/assets/page.html")
 	html := string(content)
 	if err != nil {
 		t.Error(err)
@@ -73,54 +71,6 @@ func TestParsePage(t *testing.T) {
 			assert.Equal(t, comics[test.index].Title, test.title)
 			assert.Equal(t, comics[test.index].ImgSrc, test.imgSrc)
 			assert.Equal(t, comics[test.index].Date, test.date)
-		}
-	})
-}
-
-func TestFetchPageBody(t *testing.T) {
-	t.Parallel()
-
-	t.Run("should have curl user-agent", func(t *testing.T) {
-		t.Parallel()
-
-		mc := MockClient{
-			DoFunc: func(req *http.Request) (*http.Response, error) {
-				assert.Equal(t, req.Header.Get("User-Agent"), "curl/7.82.0")
-				r := ioutil.NopCloser(bytes.NewReader([]byte("")))
-				return &http.Response{StatusCode: 200, Body: r}, nil
-			},
-		}
-		httpClient = mc
-		fetchPageBody("https://example.com")
-	})
-
-	t.Run("should have curl user-agent", func(t *testing.T) {
-		t.Parallel()
-
-		mc := MockClient{
-			DoFunc: func(req *http.Request) (*http.Response, error) {
-				r := ioutil.NopCloser(bytes.NewReader([]byte("the body")))
-				return &http.Response{StatusCode: 200, Body: r}, nil
-			},
-		}
-		httpClient = mc
-		body, _ := fetchPageBody("https://example.com")
-		assert.Equal(t, body, "the body")
-	})
-
-	t.Run("should raise an error if server has issue", func(t *testing.T) {
-		t.Parallel()
-
-		mc := MockClient{
-			DoFunc: func(req *http.Request) (*http.Response, error) {
-				r := ioutil.NopCloser(bytes.NewReader([]byte("")))
-				return &http.Response{StatusCode: 500, Body: r}, nil
-			},
-		}
-		httpClient = mc
-		_, err := fetchPageBody("https://example.com")
-		if assert.Error(t, err) {
-			assert.ErrorContains(t, err, "Status code: 500")
 		}
 	})
 }
