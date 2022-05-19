@@ -1,15 +1,26 @@
 package internal
 
-import "os"
+import (
+	"bufio"
+	"os"
+)
+
+var osStdin = os.Stdin
 
 func ReadFileOrStdin(file string) (string, error) {
 	if file == "-" {
-		var content []byte
-		_, err := os.Stdin.Read(content)
-		if err != nil {
+		var stdin []byte
+
+		scanner := bufio.NewScanner(osStdin)
+		for scanner.Scan() {
+			stdin = append(stdin, scanner.Bytes()...)
+		}
+
+		if err := scanner.Err(); err != nil {
 			return "", err
 		}
-		return string(content), nil
+
+		return string(stdin), nil
 	} else {
 		content, err := os.ReadFile(file)
 		if err != nil {
