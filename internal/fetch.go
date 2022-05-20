@@ -1,11 +1,17 @@
 package internal
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -106,4 +112,61 @@ func FetchAll(timeout int) []Comic {
 	sort.Slice(comics, func(a, b int) bool { return comics[a].Id < comics[b].Id })
 
 	return comics
+}
+
+func FetchImageDimentions(url string) (int, int, float32, error) {
+	log.Printf("Fetch image dimensions for %s\n", url)
+
+	// First 64 bytes are enough to determine the image dimensions.
+	// Do not read more than that to keep the load on the server and client as
+	// low as possible.
+	maxBytes := 64
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("Accept", "image/webp")
+	req.Header.Set("Range", fmt.Sprintf("bytes=0-%v", maxBytes))
+	res, err := client.Do(req)
+	if err != nil {
+		log.Printf("[ERROR] Could not read URL %s\n", url)
+		return 0, 0, 0.0, err
+	}
+
+	reader := bufio.NewReader(res.Body)
+	buf := make([]byte, maxBytes)
+	reader.Read(buf)
+
+	dir := os.TempDir()
+	filename := filepath.Join(dir, "demo.webp")
+	defer os.Remove(filename)
+	ioutil.WriteFile(filename, buf, 0644)
+
+	// Determine image dimensions through external `file` command and use regex
+	// to extract the dimensions
+	cmd := exec.Command("file", filename)
+	stdout, err := cmd.Output()
+	if err != nil {
+		log.Printf("[ERROR] Could not execute external 'file' cmd for file %s\n", filename)
+		return 0, 0, 0.0, err
+	}
+
+	re := regexp.MustCompile("([0-9]+)x([0-9]+)")
+	matches := re.FindAllStringSubmatch(string(stdout), -1)
+	if len(matches) == 0 {
+		return 0, 0, 0.0, nil
+	}
+	width, err := strconv.Atoi(matches[0][1])
+	if err != nil {
+		log.Printf("[ERROR] Could not convert width value '%v' to int\n", width)
+		return 0, 0, 0.0, err
+	}
+	height, _ := strconv.Atoi(matches[0][2])
+	if err != nil {
+		log.Printf("[ERROR] Could not convert height value '%v' to int\n", height)
+		return 0, 0, 0.0, err
+	}
+
+	ratio := float32(width) / float32(height)
+
+	return width, height, ratio, nil
 }

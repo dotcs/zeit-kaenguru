@@ -32,7 +32,12 @@ func parsePage(body string) ([]Comic, int) {
 		imgParts = append(imgParts[0:len(imgParts)-1], "original__ffffff")
 		imgSrc := strings.Join(imgParts, "/")
 
-		comic := Comic{id, title, imgSrc, date}
+		width, height, ratio, err := FetchImageDimentions(imgSrc)
+		if err != nil {
+			log.Printf("[ERROR] Could not determine width/height for image URL %s", imgSrc)
+		}
+
+		comic := Comic{id, title, date, ComicImg{imgSrc, width, height, ratio}}
 		comics = append(comics, comic)
 	}
 
