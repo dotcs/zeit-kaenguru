@@ -10,11 +10,7 @@ import (
 )
 
 func TestFetchPageBody(t *testing.T) {
-	t.Parallel()
-
 	t.Run("should have curl user-agent", func(t *testing.T) {
-		t.Parallel()
-
 		mc := MockClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
 				assert.Equal(t, req.Header.Get("User-Agent"), "curl/7.82.0")
@@ -27,8 +23,6 @@ func TestFetchPageBody(t *testing.T) {
 	})
 
 	t.Run("should have curl user-agent", func(t *testing.T) {
-		t.Parallel()
-
 		mc := MockClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
 				r := ioutil.NopCloser(bytes.NewReader([]byte("the body")))
@@ -41,8 +35,6 @@ func TestFetchPageBody(t *testing.T) {
 	})
 
 	t.Run("should raise an error if server has issue", func(t *testing.T) {
-		t.Parallel()
-
 		mc := MockClient{
 			DoFunc: func(req *http.Request) (*http.Response, error) {
 				r := ioutil.NopCloser(bytes.NewReader([]byte("")))

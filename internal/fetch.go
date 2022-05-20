@@ -122,11 +122,10 @@ func FetchImageDimentions(url string) (int, int, float32, error) {
 	// low as possible.
 	maxBytes := 64
 
-	client := &http.Client{}
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "image/webp")
 	req.Header.Set("Range", fmt.Sprintf("bytes=0-%v", maxBytes))
-	res, err := client.Do(req)
+	res, err := httpClient.Do(req)
 	if err != nil {
 		log.Printf("[ERROR] Could not read URL %s\n", url)
 		return 0, 0, 0.0, err
