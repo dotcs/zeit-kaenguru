@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	timeout := flag.Int("timeout", 10, "seconds until http requests time out")
+	timeout := flag.Int("timeout", 60, "seconds until http requests time out")
 	logfile := flag.String("logfile", "", "defines the path to the logfile")
 	outputFile := flag.String("output-file", "", "defines where the result should be written to")
 	flag.Parse()

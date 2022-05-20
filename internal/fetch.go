@@ -71,13 +71,14 @@ func fetchPageBody(url string) (string, error) {
 // The function can be used either by providing a channel and later reading from
 // it, or by evaluating the returned values.
 func fetchAndExtract(url string) ([]Comic, int) {
+	log.Printf("Fetch %s ...\n", url)
 	html, err := fetchPageBody(url)
 	if err != nil {
 		log.Fatalf("Error when fetching URL: %s", url)
 		panic(err)
 	}
 	comics, lastPageIndex := parsePage(html)
-	log.Printf("Fetched %s\n", url)
+	log.Printf("Finished fetching %s\n", url)
 	return comics, lastPageIndex
 }
 
