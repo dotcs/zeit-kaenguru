@@ -31,12 +31,16 @@ const comicCardTpl = entry => {
  */
 function setupImgLazyLoad() {
     const elements = document.querySelectorAll('img[data-src]');
-    let index = 0;
     const lazyLoad = function () {
-        if (index >= elements.length) return;
-        const item = elements[index];
-        const parent = item.parentElement;
-        if ((this.scrollY + this.innerHeight) > parent.offsetTop) {
+        for (let i=0; i<elements.length; i++) {
+            const item = elements[i];
+            const parent = item.parentElement;
+            const bounding = parent.getBoundingClientRect();
+
+            const inView = (bounding.top >= -bounding.height) && (bounding.bottom <= (window.innerHeight + bounding.height));
+            if (!inView) continue;
+            if (item.hasAttribute("src")) continue;
+
             const src = item.getAttribute("data-src");
             item.src = src;
             item.addEventListener('load', function () {
@@ -45,8 +49,6 @@ function setupImgLazyLoad() {
                 item.hasAttribute('height') && item.removeAttribute('height');
                 parent.classList.add("loaded");
             });
-            index++;
-            lazyLoad();
         }
     };
     const init = function () {
@@ -54,6 +56,14 @@ function setupImgLazyLoad() {
         lazyLoad();
     };
     return init();
+}
+
+function jumpToComicByHash() {
+    const id = location.hash.substring(1);
+    const el = document.getElementById(id);
+    if (el) {
+        window.scrollTo({ top: el.offsetTop })
+    }
 }
 
 fetch(url)
@@ -65,4 +75,8 @@ fetch(url)
         rootEl.innerHTML = html;
 
         setupImgLazyLoad();
+        
+        if (location.hash) {
+            jumpToComicByHash()
+        }
     });
