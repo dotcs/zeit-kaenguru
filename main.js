@@ -35,13 +35,15 @@ function setupImgLazyLoad() {
     const lazyLoad = function () {
         if (index >= elements.length) return;
         const item = elements[index];
-        if ((this.scrollY + this.innerHeight) > item.offsetTop) {
+        const parent = item.parentElement;
+        if ((this.scrollY + this.innerHeight) > parent.offsetTop) {
             const src = item.getAttribute("data-src");
             item.src = src;
             item.addEventListener('load', function () {
                 item.removeAttribute('data-src');
                 item.hasAttribute('width') && item.removeAttribute('width');
                 item.hasAttribute('height') && item.removeAttribute('height');
+                parent.classList.add("loaded");
             });
             index++;
             lazyLoad();
