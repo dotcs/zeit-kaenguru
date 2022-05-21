@@ -30,6 +30,9 @@
     left: 50%;
     top: 50%;
 }
+.card__img-wrapper.loaded::before {
+    z-index: -1;
+}
 
 .card__headline {
     font-size: 1.4em;
