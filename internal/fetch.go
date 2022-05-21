@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -70,14 +69,14 @@ func fetchPageBody(url string) (string, error) {
 //
 // The function can be used either by providing a channel and later reading from
 // it, or by evaluating the returned values.
-func fetchAndExtract(url string) ([]Comic, int) {
+func fetchAndExtract(url string, timeout int) ([]Comic, int) {
 	log.Printf("Fetch %s ...\n", url)
 	html, err := fetchPageBody(url)
 	if err != nil {
 		log.Fatalf("Error when fetching URL: %s", url)
 		panic(err)
 	}
-	comics, lastPageIndex := parsePage(html)
+	comics, lastPageIndex := parsePage(html, timeout)
 	log.Printf("Finished fetching %s\n", url)
 	return comics, lastPageIndex
 }
@@ -86,7 +85,7 @@ func fetchAndExtract(url string) ([]Comic, int) {
 // all published comics. Comics are fetched from all subpages in parallel and
 // are sorted after their ID before returned.
 func FetchAll(timeout int) []Comic {
-	comics, maxPageIndex := fetchAndExtract(startUrl)
+	comics, maxPageIndex := fetchAndExtract(startUrl, timeout)
 
 	ch := make(chan []Comic)
 
@@ -94,7 +93,7 @@ func FetchAll(timeout int) []Comic {
 	for i := 2; i <= maxPageIndex; i++ {
 		url := urlTemplate + fmt.Sprintf("%v", i)
 		go func() {
-			cs, _ := fetchAndExtract(url)
+			cs, _ := fetchAndExtract(url, timeout)
 			ch <- cs
 		}()
 	}
@@ -105,6 +104,7 @@ func FetchAll(timeout int) []Comic {
 		case next := <-ch:
 			comics = append(comics, next[:]...)
 		case <-time.After(time.Second * time.Duration(timeout)):
+			log.Printf("[ERROR] Request timed out\n")
 			continue
 		}
 	}
@@ -136,17 +136,20 @@ func FetchImageDimentions(url string) (int, int, float32, error) {
 	buf := make([]byte, maxBytes)
 	reader.Read(buf)
 
-	dir := os.TempDir()
-	filename := filepath.Join(dir, "demo.webp")
-	defer os.Remove(filename)
-	ioutil.WriteFile(filename, buf, 0644)
+	file, err := os.CreateTemp(os.TempDir(), "zeit-kaenguru*.webp")
+	if err != nil {
+		log.Printf("[ERROR] Could not open temporary file %s\n", file.Name())
+		return 0, 0, 0.0, err
+	}
+	defer os.Remove(file.Name())
+	ioutil.WriteFile(file.Name(), buf, 0644)
 
 	// Determine image dimensions through external `file` command and use regex
 	// to extract the dimensions
-	cmd := exec.Command("file", filename)
+	cmd := exec.Command("file", file.Name())
 	stdout, err := cmd.Output()
 	if err != nil {
-		log.Printf("[ERROR] Could not execute external 'file' cmd for file %s\n", filename)
+		log.Printf("[ERROR] Could not execute external 'file' cmd for file %s\n", file.Name())
 		return 0, 0, 0.0, err
 	}
 

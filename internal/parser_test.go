@@ -36,6 +36,7 @@ func TestParsePage(t *testing.T) {
 	httpClient = mc
 	expectedImgWidth := 5613
 	expectedImgHeight := 2000
+	timeout := 10
 	t.Cleanup(func() { httpClient = httpClientBak })
 
 	content, err := os.ReadFile("../tests/assets/page.html")
@@ -47,21 +48,22 @@ func TestParsePage(t *testing.T) {
 	t.Run("should find all comics", func(t *testing.T) {
 		t.Parallel()
 
-		comics, _ := parsePage(html)
+		comics, _ := parsePage(html, timeout)
 		assert.Len(t, comics, 50)
 	})
 
 	t.Run("should extract the right max page information", func(t *testing.T) {
 		t.Parallel()
 
-		_, maxPageIndex := parsePage(html)
+		_, maxPageIndex := parsePage(html, timeout)
 		assert.Equal(t, maxPageIndex, 9)
 	})
 
 	t.Run("should extract the right information", func(t *testing.T) {
 		t.Parallel()
 
-		comics, _ := parsePage(html)
+		comics, _ := parsePage(html, timeout)
+
 		type testImg struct {
 			src    string
 			height int
@@ -76,7 +78,7 @@ func TestParsePage(t *testing.T) {
 		}
 		tests := []test{
 			{
-				index: 0,
+				index: 49,
 				id:    418,
 				title: "Am Anfang war das Wort",
 				date:  "2022-05-14T05:00:11+02:00",
@@ -87,7 +89,7 @@ func TestParsePage(t *testing.T) {
 				},
 			},
 			{
-				index: 49,
+				index: 0,
 				id:    369,
 				title: "Irgendwie Pech",
 				date:  "2022-03-18T05:00:05+01:00",
@@ -100,13 +102,13 @@ func TestParsePage(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			assert.Equal(t, comics[test.index].Id, test.id)
-			assert.Equal(t, comics[test.index].Title, test.title)
-			assert.Equal(t, comics[test.index].Date, test.date)
-			assert.Equal(t, comics[test.index].Img.Height, test.img.height)
-			assert.Equal(t, comics[test.index].Img.Width, test.img.width)
-			assert.Equal(t, comics[test.index].Img.Ratio, float32(test.img.width)/float32(test.img.height))
-			assert.Equal(t, comics[test.index].Img.Src, test.img.src)
+			assert.Equal(t, test.id, comics[test.index].Id)
+			assert.Equal(t, test.title, comics[test.index].Title)
+			assert.Equal(t, test.date, comics[test.index].Date)
+			assert.Equal(t, test.img.height, comics[test.index].Img.Height)
+			assert.Equal(t, test.img.width, comics[test.index].Img.Width)
+			assert.Equal(t, float32(test.img.width)/float32(test.img.height), comics[test.index].Img.Ratio)
+			assert.Equal(t, test.img.src, comics[test.index].Img.Src)
 		}
 	})
 }
