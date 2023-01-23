@@ -3,6 +3,7 @@ name: "Update Gist"
 on:
   schedule:
   - cron: "0 6,10 * * *" # every day at 6am and 10am
+  workflow_dispatch: # allows to manually trigger the workflow
 
 jobs:
   update_gist:
